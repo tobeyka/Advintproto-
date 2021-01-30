@@ -1,0 +1,11 @@
+:root {
+  
+  font-family: 'poppins', sans-serif;
+
+  /* Color */
+
+  --color-text: #484848;
+  --color-text-link: #008e83;
+  --color-dot-inactive: #d3d3d3;
+  --color-box-shadow: #00000029;
+}
