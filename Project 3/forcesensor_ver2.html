@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Expression with P5js</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/p5.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+    }
+
+    body{
+      margin: 0px;
+      display: flex;
+      justify-content:center;
+      align-items: center;
+    }
+
+  </style>
+</head>
+<body>
+
+  <script>
+    let baseURL = "https://api.particle.io/v1/devices/23001e001147393132343438/";
+    let token = "?access_token=23e97cc59d32ca21fa7e7e27c0afe1be7cf3f892";
+    let forcesensor = "force";
+    let data1URL = baseURL + forcesensor + token;  
+
+    let currentFactor, prevFactor;
+    let timeInterval = 1000;
+    let forceSensor = 1;
+    
+    var mass = [];
+    var positionX = [];
+    var positionY = [];
+    var velocityX = [];
+    var velocityY = [];
+
+    function setup() {
+      createCanvas(windowWidth, windowHeight);
+      noStroke();
+      fill(64, 255, 255, 192);
+    }
+
+    function draw() {
+      background(32);
+      
+      for (var particleA = 0; particleA < mass.length; particleA++) {
+        var accelerationX = 0, accelerationY = 0;
+        
+        for (var particleB = 0; particleB < mass.length; particleB++) {
+          if (particleA != particleB) {
+            var distanceX = positionX[particleB] - positionX[particleA];
+            var distanceY = positionY[particleB] - positionY[particleA];
+
+            var distance = sqrt(distanceX * distanceX + distanceY * distanceY);
+            if (distance < 1) distance = 1;
+
+            var force = (distance - 320) * mass[particleB] / distance;
+            accelerationX += force * distanceX;
+            accelerationY += force * distanceY;
+          }
+        }
+        
+        velocityX[particleA] = velocityX[particleA] * 0.99 + accelerationX * mass[particleA];
+        velocityY[particleA] = velocityY[particleA] * 0.99 + accelerationY * mass[particleA];
+      }
+      
+      for (var particle = 0; particle < mass.length; particle++) {
+        positionX[particle] += velocityX[particle];
+        positionY[particle] += velocityY[particle];
+        
+        ellipse(positionX[particle], positionY[particle], mass[particle] * 1000, mass[particle] * 1000);
+      }
+    }
+
+    function addNewParticle(JSONdata) {
+      console.log(JSONdata);
+      if(JSONdata.name === "force"){
+        mass.push = map(parseInt(JSONdata.result),(random(0.003, 0.03)));
+        positionX.push(JSONdata);
+        velocityX.push(0);
+        velocityY.push(0);
+      }
+    }
+
+    function pressSensor() {
+      addNewParticle();
+    }
+
+      function errorHandle(Error){
+        console.log("Error has occured: " + Error);
+      }
+
+      // function dataHandle(JSONdata){
+      //   console.log(JSONdata);
+      //   if(JSONdata.name === "force"){
+      //     myHue = map(parseInt(JSONdata.result), 0, 4096, 0, 360);
+      //   }
+      // }
+
+  </script>
+    
+  
+</body>
+</html>

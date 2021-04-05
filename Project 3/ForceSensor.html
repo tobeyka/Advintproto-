@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Expression with P5js</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/p5.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+    }
+
+    body{
+      margin: 0px;
+      display: flex;
+      justify-content:center;
+      align-items: center;
+    }
+
+  </style>
+</head>
+<body>
+
+<script>
+  let baseURL = "https://api.particle.io/v1/devices/23001e001147393132343438/";
+  let token = "?access_token=23e97cc59d32ca21fa7e7e27c0afe1be7cf3f892";
+  let forcesensor = "force";
+  let photocell = "LDR";
+  let apiForceURL = baseURL + forcesensor + token;  
+  let apiPhotocellURL = baseURL + photocell + token;  
+
+  //TIMER vars:
+  let currentFactor, prevFactor;
+  let timeInterval = 1000;
+  let whichSensor = 1;
+  let numberOfSensor = 2; //number of sensors you have
+  let forceParticle, photocellParticle;
+  let inForceData, inPhotocellData;
+  let forceSize = 10;
+  let photocellSize = 10;
+  let forceColor = 320;
+  let photocellColor = 185;
+  let forceAlph = 0;
+  let photocellAlph = 0;
+
+  //COLOR vars:
+  // let myHue = 0;
+  // let mySat = 100;
+
+  function fParticle(x, y) {
+  this.x = x;
+  this.y = y;
+
+  this.update = function () {
+    this.x += random(-forceSize*1.5, forceSize*1.5);
+    this.y += random(-forceSize, forceSize);
+
+    this.x = constrain(this.x, 0, width);
+    this.y = constrain(this.y, 0, height);
+  }
+
+  this.show = function () {
+    noStroke();
+    fill(forceColor, 100, 100, forceAlph);
+    ellipse(this.x, this.y, forceSize*2, forceSize);
+  }
+}
+
+function pParticle(x, y) {
+  this.x = x;
+  this.y = y;
+
+  this.update = function () {
+    this.x += random(-photocellSize*1.5, photocellSize*1.5);
+    this.y += random(-photocellSize, photocellSize);
+
+    this.x = constrain(this.x, 0, width);
+    this.y = constrain(this.y, 0, height);
+  }
+
+  this.show = function () {
+    noStroke();
+    fill(photocellColor, 100, 100, photocellAlph);
+    rect(this.x, this.y, photocellSize*2, photocellSize);
+  }
+}
+
+
+  function setup(){
+    createCanvas(800,800);
+    colorMode(HSB);
+
+    currentFactor = 0;
+    prevFactor = 0;
+
+    forceParticle = new fParticle(width/2, height/2, forceSize);
+    photocellParticle = new pParticle(width/2, height/2, photocellSize);
+    background(0);
+  }
+
+  function draw(){
+
+    currentFactor = millis() % timeInterval;
+    if(currentFactor < prevFactor){ 
+      inForceData = loadJSON(apiForceURL, parseForceData, errorHandle);
+      inPhotocellData = loadJSON(apiPhotocellURL, parsePhotocellData, errorHandle);
+    }
+
+    prevFactor = currentFactor; //prep for the next frame
+
+    forceParticle.update();
+    forceParticle.show();
+    photocellParticle.update();
+    photocellParticle.show();
+  }
+
+  function parseForceData(JSONdata){
+    let inForceData = parseInt(JSONdata.result);
+    forceSize = map(inForce, 226, 450, 10, 30, true);
+    console.log("Force: " + inForce);
+    if (inForce > 226) {
+      forceAlph = 0.1;
+    }
+    else {
+      forceAlph = 0;
+    }
+  }
+
+  function parsePhotocellData(JSONdata) {
+    let inPhotocell = parseInt(JSONdata.result);
+    photocellSize = map(inPhotocell, 116, 800, 10, 30, true);
+    console.log("photocell: " + inPhotocell);
+    if (inPhotocell > 116) {
+      photocellAlph = 0.1;
+    }
+    else {
+      photocellAlph = 0;
+    }
+  }
+
+  function errorHandle(Error){
+    console.log("Error has occured: " + Error);
+  }
+</script>
+  
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Expression with P5js</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/p5.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+    }
+
+    body{
+      margin: 0px;
+      display: flex;
+      justify-content:center;
+      align-items: center;
+    }
+
+  </style>
+</head>
+<body>
+
+
+<script>
+  let baseURL = "https://api.particle.io/v1/devices/23001e001147393132343438/";
+  let token = "?access_token=c713a33f4822cca91d07c903b84bfc8ff4b443d1";
+  let forcesensor = "force";
+  let photocell = "LDR";
+  let tilte = "tilte";
+  let piezo = "piezo";
+  let data1URL = baseURL + forcesensor + token;  
+  let data2URL = baseURL + photocell + token;  
+  let data3URL = baseURL + tilte + token;
+  let data4URL = baseURL + piezo + token;
+  let inForceData, inPhotocellData, inTilteData, inPiezoData;
+  let currentFactor, prevFactor;
+  let timeInterval = 1000;
+  let forceResult, photocellResult, tilteResult, piezoResult;
+  let forceParticles = [];
+  let photocellParticles = [];
+  let tilteParticles = [];
+  let piezoParticles = [];
+
+  function setup(){
+    createCanvas(800,800);
+    colorMode(HSB);
+    currentFactor = 0;
+    prevFactor = 0;
+  }
+
+  function draw(){
+    background(0);
+    currentFactor = millis() % timeInterval;
+    if(currentFactor < prevFactor){ 
+      inForceData = loadJSON(data1URL, parseForceData, errorHandle);
+      inPhotocellData = loadJSON(data2URL, parsePhotocellData, errorHandle);
+      inTilteData = loadJSON(data3URL, parseTilteData, errorHandle);
+      inPiezoData = loadJSON(data4URL, parsePiezoData, errorHandle);
+    }
+
+  for (let i = 0; i < forceParticles.length; i++){
+    forceParticles[i].display();
+  }
+
+  for (let i = 0; i < photocellParticles.length; i++){
+    photocellParticles[i].display();
+  }
+
+  for (let i = 0; i < tilteParticles.length; i++){
+    tilteParticles[i].display();
+  }
+  
+  for (let i = 0; i < piezoParticles.length; i++){
+    piezoParticles[i].display();
+  }
+
+  prevFactor = currentFactor;  
+}
+
+  function parseForceData(JSONdata){
+    forceResult = map(parseInt(JSONdata.result), 0, 4096, 0, 360);
+    console.log("Force: " + parseInt(JSONdata.result));
+    if (parseInt(JSONdata.result) < 2000) {
+      newForceParticle();
+    }
+  }
+
+  function parsePhotocellData(JSONdata) {
+    photocellResult = map(parseInt(JSONdata.result), 0, 4096, 0, 100);
+    console.log("photocell: " + parseInt(JSONdata.result));
+    if (parseInt(JSONdata.result) < 1000) {
+      newPhotocellParticle();
+    }
+  }
+
+  function parseTilteData(JSONdata) {
+    tilteResult = map(parseInt(JSONdata.result), 0, 4096, 0, 100);
+    console.log("tilte: " + parseInt(JSONdata.result));
+    if (parseInt(JSONdata.result) < 1000) {
+      newTilteParticle();
+    }
+  }
+
+  function parsePiezoData(JSONdata) {
+    piezoResult = map(parseInt(JSONdata.result), 0, 4096, 0, 100);
+    console.log("piezo: " + parseInt(JSONdata.result));
+    if (parseInt(JSONdata.result) < 1000) {
+      newPiezoParticle();
+    }
+  }
+
+  function newForceParticle() {
+    let x = random(width);
+    let y = random(height);
+    let r = forceResult;
+    let forceSense = new forceParticle(x, y, r);
+    forceParticles.push(forceSense);
+  }
+
+  function newPhotocellParticle() {
+    let x = random(width);
+    let y = random(height);
+    let r = photocellResult;
+    let photocellSense = new photocellParticle(x, y, r);
+    photocellParticles.push(photocellSense);
+    console.log(photocellParticles.length);
+  }
+
+  class forceParticle{
+    constructor(x, y, r){
+      this.x = x;
+      this.y = y;
+      this.r = r;
+    }
+
+    display () {
+      noStroke ();
+      fill(0, 100, 80); //red
+      circle(this.x, this.y, this.r);
+    }
+  }
+
+  class photocellParticle{
+    constructor(x, y, r){
+      this.x = x;
+      this.y = y;
+      this.r = r;
+    }
+    display () {
+      noStroke ();
+      fill(50, 0, 100); //white
+      circle(this.x, this.y, this.r);
+    }
+  }
+
+  function errorHandle(Error){
+    console.log("Error has occured: " + Error);
+  }
+
+</script>
+  
+</body>
+</html>
