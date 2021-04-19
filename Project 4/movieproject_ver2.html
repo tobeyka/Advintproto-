@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project 4</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/p5.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+    }
+
+    body{
+      margin: 0px;
+      display: flex;
+      justify-content:center;
+      align-items: center;
+    }
+
+  </style>
+</head>
+<body>
+
+<script>
+  let baseURL = "https://api.particle.io/v1/devices/23001e001147393132343438/";
+  let token = "?access_token=d3c79f5c1dcf68b1533203061e30f0bae2da808e";
+  let musclesensor = "muscle";
+  let pulsesensor = "pulse";
+  let tilt = "tilt";
+  let data1URL = baseURL + musclesensor + token;  
+  let data2URL = baseURL + pulsesensor + token;  
+  let data3URL = baseURL + tilt + token;
+  let inMuscleData, inPulseData, inTilteData;
+  let currentFactor, prevFactor;
+  let timeInterval = 5000;
+  let muscleResult, pulseResult, tiltResult;
+  let muscleParticles = [];
+  let pulseParticles = [];
+  let tiltParticles = [];
+
+  function setup(){
+    createCanvas(800,800);
+    colorMode(HSB);
+    currentFactor = 0;
+    prevFactor = 0;
+  }
+
+  function draw(){
+    background(0);
+    currentFactor = millis() % timeInterval;
+    if(currentFactor < prevFactor){ 
+      inMuscleData = loadJSON(data1URL, parseMuscleData, errorHandle);
+      inPulselData = loadJSON(data2URL, parsePulseData, errorHandle);
+      inTiltData = loadJSON(data3URL, parseTiltData, errorHandle);
+    }
+
+  for (let i = 0; i < muscleParticles.length; i++){
+    muscleParticles[i].display();
+  }
+
+  for (let i = 0; i < pulseParticles.length; i++){
+    pulseParticles[i].display();
+  }
+
+  for (let i = 0; i < tiltParticles.length; i++){
+    tiltParticles[i].display();
+  }
+
+  prevFactor = currentFactor;  
+}
+
+  function parseMuscleData(JSONdata){
+    muscleResult = map(parseInt(JSONdata.result), 0, 4096, 0, 360);
+    console.log("Muscle: " + parseInt(JSONdata.result));
+    if (parseInt(JSONdata.result) < 2000) {
+      newMuscleParticle();
+    }
+  }
+
+  function parsePulseData(JSONdata) {
+    pulseResult = map(parseInt(JSONdata.result), 0, 4096, 0, 100);
+    console.log("pulse: " + parseInt(JSONdata.result));
+    if (parseInt(JSONdata.result) < 1000) {
+      newPulseParticle();
+    }
+  }
+
+  function parseTiltData(JSONdata) {
+    tiltResult = map(parseInt(JSONdata.result), 0, 4096, 0, 100);
+    console.log("tilt: " + parseInt(JSONdata.result));
+    if (parseInt(JSONdata.result) < 1000) {
+      newTiltParticle();
+    }
+  }
+
+  function newMuscleParticle() {
+    let x = random(width);
+    let y = random(height);
+    let r = muscleResult;
+    let muscleSense = new muscleParticle(x, y, r);
+    muscleParticles.push(muscleSense);
+  }
+
+  function newPulseParticle() {
+    let x = random(width);
+    let y = random(height);
+    let r = pulseResult;
+    let pulseSense = new pulseParticle(x, y, r);
+    pulseParticles.push(pulseSense);
+    console.log(pulseParticles.length);
+  }
+
+  function newTiltParticle() {
+    let x = random(width);
+    let y = random(height);
+    let r = tiltResult;
+    let tiltSense = new tiltParticle(x, y, r);
+    tiltParticles.push(tiltSense);
+    console.log(tiltParticles.length);
+  }
+
+  class muscleParticle{
+    constructor(x, y, r){
+      this.x = x;
+      this.y = y;
+      this.r = r;
+    }
+
+    display () {
+      noStroke ();
+      fill(220, 100, 85); //blue
+      circle(this.x, this.y, this.r);
+    }
+  }
+
+  class pulseParticle{
+    constructor(x, y, r){
+      this.x = x;
+      this.y = y;
+      this.r = r;
+    }
+    display () {
+      noStroke ();
+      fill(0, 100, 80); //red
+      circle(this.x, this.y, this.r);
+    }
+  }
+
+  class tiltParticle{
+    constructor(x, y, r){
+      this.x = x;
+      this.y = y;
+      this.r = r;
+    }
+    display () {
+      noStroke ();
+      fill(50, 0, 100); //white
+      circle(this.x, this.y, this.r);
+    }
+  }
+
+  function errorHandle(Error){
+    console.log("Error has occured: " + Error);
+  }
+
+</script>
+  
+</body>
+</html>

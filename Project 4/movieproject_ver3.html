@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project 4</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/p5.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+    }
+
+    body{
+      margin: 0px;
+      display: flex;
+      justify-content:center;
+      align-items: center;
+    }
+
+  </style>
+</head>
+<body>
+
+<script>
+
+  let baseURL = "https://api.particle.io/v1/devices/23001e001147393132343438/";
+  let token = "?access_token=d3c79f5c1dcf68b1533203061e30f0bae2da808e";
+  let musclesensor = "muscle";
+  let pulsesensor = "pulse";
+  let tilt = "tilt";
+  let data1URL = baseURL + musclesensor + token;  
+  let data2URL = baseURL + pulsesensor + token;  
+  let data3URL = baseURL + tilt + token;
+  let inMuscleData, inPulseData, inTilteData;
+  let currentFactor, prevFactor;
+  let timeInterval = 5000;
+  let muscleResult, pulseResult, tiltResult;
+  let muscleParticles = [];
+  let pulseParticles = [];
+  let tiltParticles = [];
+
+  var mass = [];
+  var positionX = [];
+  var positionY = [];
+  var velocityX = [];
+  var velocityY = [];
+  var particleType = [];
+
+  function setup() {
+    createCanvas(windowWidth, windowHeight);
+    colorMode(RGB);
+    noStroke();
+    currentFactor = 0;
+    prevFactor = 0;
+  }
+
+  function draw(){
+    background(255,255,255);
+    currentFactor = millis() % timeInterval;
+    if(currentFactor < prevFactor){ 
+      inMuscleData = loadJSON(data1URL, parseMuscleData, errorHandle);
+      inPulselData = loadJSON(data2URL, parsePulseData, errorHandle);
+      inTiltData = loadJSON(data3URL, parseTiltData, errorHandle);
+    }
+
+  for (let i = 0; i < muscleParticles.length; i++){
+    muscleParticles[i].display();
+  }
+
+  for (let i = 0; i < pulseParticles.length; i++){
+    pulseParticles[i].display();
+  }
+
+  for (let i = 0; i < tiltParticles.length; i++){
+    tiltParticles[i].display();
+  }
+
+  prevFactor = currentFactor;  
+
+
+	for (var particleA = 0; particleA < mass.length; particleA++) {
+		var accelerationX = 0, accelerationY = 0;
+		
+		for (var particleB = 0; particleB < mass.length; particleB++) {
+			if (particleA != particleB) {
+				var distanceX = positionX[particleB] - positionX[particleA];
+				var distanceY = positionY[particleB] - positionY[particleA];
+
+				var distance = sqrt(distanceX * distanceX + distanceY * distanceY);
+				if (distance < 1) distance = 1;
+
+				var force = (distance - 320) * mass[particleB] / distance;
+				accelerationX += force * distanceX;
+				accelerationY += force * distanceY;
+			}
+		}
+		
+		velocityX[particleA] = velocityX[particleA] * 0.99 + accelerationX * mass[particleA];
+		velocityY[particleA] = velocityY[particleA] * 0.99 + accelerationY * mass[particleA];
+	}
+	
+	for (var particle = 0; particle < mass.length; particle++) {
+    positionX[particle] += velocityX[particle];
+		positionY[particle] += velocityY[particle];
+    if(particleType[particle] == 1){
+      fill(255, 216, 77); //yellow
+      ellipse(positionX[particle], positionY[particle], mass[particle] * 1000, mass[particle] * 1000);
+    }
+	}
+  for (var particle = 0; particle < mass.length; particle++) {
+    positionX[particle] += velocityX[particle];
+		positionY[particle] += velocityY[particle];
+    if(particleType[particle] == 2){
+      fill(255, 0, 64); //red
+      ellipse(positionX[particle], positionY[particle], mass[particle] * 1000, mass[particle] * 1000);
+    }
+	}
+  for (var particle = 0; particle < mass.length; particle++) {
+    positionX[particle] += velocityX[particle];
+		positionY[particle] += velocityY[particle];
+    if(particleType[particle] == 3){
+      fill(0, 255, 128); //green
+      ellipse(positionX[particle], positionY[particle], mass[particle] * 1000, mass[particle] * 1000);
+    }
+	}
+}
+
+  function parseMuscleData(JSONdata){
+    muscleResult = map(parseInt(JSONdata.result), 0, 4096, 0, 360);
+    console.log("Muscle: " + parseInt(JSONdata.result));
+    if (parseInt(JSONdata.result) > 2300) {
+      addNewMuscleParticle();
+    }
+  }
+
+  function parsePulseData(JSONdata) {
+    pulseResult = map(parseInt(JSONdata.result), 0, 4096, 0, 100);
+    console.log("pulse: " + parseInt(JSONdata.result));
+    if (parseInt(JSONdata.result) > 2000) {
+      addNewPulseParticle();
+    }
+  }
+
+  function parseTiltData(JSONdata) {
+    tiltResult = map(parseInt(JSONdata.result), 0, 4096, 0, 100);
+    console.log("tilt: " + parseInt(JSONdata.result));
+    if (parseInt(JSONdata.result) > 2000) {
+      addNewTiltParticle();
+    }
+  }
+
+  function addNewMuscleParticle() {
+	mass.push(random(0.003, 0.03));
+	positionX.push(Math.random() * windowWidth);
+	positionY.push(Math.random() * windowHeight);
+	velocityX.push(0);
+	velocityY.push(0);
+  particleType.push(1);
+}
+
+function addNewPulseParticle() {
+	mass.push(random(0.003, 0.03));
+	positionX.push(Math.random() * windowWidth);
+	positionY.push(Math.random() * windowHeight);
+	velocityX.push(0);
+	velocityY.push(0);
+  particleType.push(2);
+}
+
+function addNewTiltParticle() {
+	mass.push(random(0.003, 0.03));
+	positionX.push(Math.random() * windowWidth);
+	positionY.push(Math.random() * windowHeight);
+	velocityX.push(0);
+	velocityY.push(0);
+  particleType.push(3);
+}
+
+
+  function errorHandle(Error){
+    console.log("Error has occured: " + Error);
+  }
+
+</script>
+  
+</body>
+</html>
